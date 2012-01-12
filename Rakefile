@@ -39,14 +39,9 @@ def replace_file(file)
 end
  
 def link_file(file)
-  puts "linking #{path_to(file)}"
-  ln_s File.join(FileUtils.pwd,file), path_to(file), :force => true
+  puts "Linking #{@snippets_dir}/#{file}"
+  ln_s File.join(FileUtils.pwd,file), @snippets_dir, :force => true, :verbose => false
 end
-
-def path_to(file)
-	File.join(@snippets_dir, "#{file}")
-end
-
 
 namespace :snippets_dir do
 	desc "Sets @snippets_dir dependent on which OS You run" 
