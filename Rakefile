@@ -1,21 +1,38 @@
-#require 'fileutils'
-#include FileUtils
-require 'rake'
- 
 # The install task was stolen from RyanB
 # http://github.com/ryanb/dotfiles
 
-desc "install the snippets into user's vim directory @home"
+# encoding: utf-8
+
+desc "Clear default snippets in user's vim directory @home"
+task :clean => ["snippets_dir:find"] do
+  Dir[@snippets_dir + '/*.snippets'].each do |file|
+    # puts file
+    File.delete(file)
+  end
+end
+
+desc "Generate snippets for html special chars entities"
+task :special_chars do
+  File.open('special_chars.snippets').each_line do |line|
+    if line =~ /(^[a-z]+?)\s(\D+?|[^\s])\s(.*)\n/m
+      # puts "1:'#{$1}' 2:'#{$2}' 3:'#{$3}'"
+      puts "Generating #{$2} snippet file"
+      File.open("html/#{$2}.snippet", 'w') { |file| file.write "#{$3}" }
+    end
+  end
+end
+
+desc "Install the snippets into user's vim directory @home"
 task :install => ["snippets_dir:find"] do
   replace_all = false
   Dir['*'].each do |file|
     next if %w[Rakefile].include? file
-    
+
     if File.exist?(File.join(@snippets_dir, "#{file}"))
       if replace_all
         replace_file(file)
       else
-        print "overwrite #{File.join(@snippets_dir, file)}? [ynaq] "
+        print "Overwrite #{File.join(@snippets_dir, file)}? [ynaq] "
         case $stdin.gets.chomp
         when 'a'
           replace_all = true
@@ -25,7 +42,7 @@ task :install => ["snippets_dir:find"] do
         when 'q'
           exit
         else
-          puts	File.join(@snippets_dir, "#{file}") 
+          puts	File.join(@snippets_dir, "#{file}")
         end
       end
     else
@@ -33,22 +50,24 @@ task :install => ["snippets_dir:find"] do
     end
   end
 end
- 
+
 def replace_file(file)
   link_file(file)
 end
- 
+
 def link_file(file)
   puts "Linking #{@snippets_dir}/#{file}"
+  # puts "ORIG: " + FileUtils.pwd + "/" + file
+  # puts "TRGT: " + @snippets_dir
   ln_s File.join(FileUtils.pwd,file), @snippets_dir, :force => true, :verbose => false
 end
 
 namespace :snippets_dir do
-	desc "Sets @snippets_dir dependent on which OS You run" 
+  desc "Sets @snippets_dir dependent on which OS You run"
   task :find do
     vim_dir = File.join(ENV['VIMFILES'] || ENV['HOME'] || ENV['USERPROFILE'], RUBY_PLATFORM =~ /mswin|msys|mingw32/ ? "vimfiles" : ".vim")
     pathogen_dir = File.join(vim_dir, "bundle")
-    @snippets_dir = File.directory?(pathogen_dir) ? File.join(pathogen_dir, "snipmate", "snippets") : File.join(vim_dir, "snippets")
+    @snippets_dir = File.directory?(pathogen_dir) ? File.join(pathogen_dir, "snipmate.vim", "snippets") : File.join(vim_dir, "snippets")
   end
 
   desc "Purge the contents of the vim snippets directory"
@@ -70,4 +89,4 @@ desc "Alias for purge"
 task :purge => ["snippets_dir:purge"]
 
 desc "Alias for default task run easy 'rake'"
-task :default => :install
+task :default => [:special_chars, :clean, :install]
