@@ -45,8 +45,8 @@ def replace_file(file)
 end
 
 def link_file(file)
-  puts "Linking #{@snippets_dir}/#{file}"
-  ln_s File.join(FileUtils.pwd,file), @snippets_dir, :force => true, :verbose => false
+  puts "Copying #{@snippets_dir}/#{file}"
+  cp_r File.join(FileUtils.pwd,file), @snippets_dir, :verbose => false
 end
 
 namespace :snippets_dir do
