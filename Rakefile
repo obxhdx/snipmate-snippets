@@ -5,11 +5,22 @@
 
 desc 'Generate snippets for html special chars entities'
 task :html_special_chars do
-  File.open('special_chars.snippets').each_line do |line|
-    if line =~ /(^[a-z]+?)\s(\D+?|[^\s])\s(.*)\n/m
-      puts "Generating #{$2} snippet file"
-      File.open("html/#{$2}.snippet", 'w') { |file| file.write "#{$3}" }
-    end
+  Rake::Task['generate_snippet_files'].invoke './html/special_chars.snippets'
+end
+
+desc 'Split single *.snippets file into multiple *.snippet files. Note: snippets must be separated by an empty line.'
+task :generate_snippet_files, :input_file do |t, args|
+  snippets_file = File.open(args[:input_file])
+  snippets_dir  = File.dirname snippets_file
+
+  contents = snippets_file.read
+  snippets = contents.scan /^[^#]\w+\s(.*?)\s(.*?)\n$/m
+
+  snippets.each do |s|
+    file = "#{snippets_dir}/#{s[0]}.snippet"
+
+    puts "Generating #{file}"
+    File.open("#{file}", 'w+') { |f| f.write "#{s[1]}" }
   end
 end
 
